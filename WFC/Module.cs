@@ -15,6 +15,7 @@ namespace WFC
     {
         public Mesh Geometry { get; set; }
         public List<Edge> Edges { get; set; }
+        public Point3d Origin { get; set; }
 
         /// <summary>
         /// Default (empty) constructor.
@@ -23,6 +24,20 @@ namespace WFC
         {
             this.Geometry = null;
             this.Edges = new List<Edge>() { new Edge() };
+            this.Origin = Point3d.Origin;
+        }
+
+        /// <summary>
+        /// Constructor with single mesh and edge list.
+        /// </summary>
+        /// <param name="geometry"></param>
+        /// <param name="edges"></param>
+        public Module(Mesh geometry, List<Edge> edges)
+        {
+            this.Geometry = geometry;
+            this.Edges = edges;
+
+            this.Origin = geometry.GetBoundingBox(true).Min;
         }
 
         /// <summary>
@@ -37,6 +52,8 @@ namespace WFC
 
             this.Geometry = m;
             this.Edges = edges;
+
+            this.Origin = m.GetBoundingBox(true).Min;
         }
 
         /// <summary>
@@ -58,6 +75,8 @@ namespace WFC
                 edgeList.Add(new Edge(edgeName[i], edgeType[i]));
             }
             this.Edges = edgeList;
+
+            this.Origin = m.GetBoundingBox(true).Min;
         }
 
         public override string ToString()
