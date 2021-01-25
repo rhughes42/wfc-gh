@@ -116,7 +116,11 @@ namespace WFC.Components
                     fourGeo.Transform(fourRot);
                     rotated.Add(new Module(fourGeo, fourEdges));
                 }
+                modules = rotated;
             }
+
+            this.Message = String.Format("{0] Modules", modules.Count.ToString());
+            DA.SetDataList(0, modules);
         }
 
         /// <summary>
