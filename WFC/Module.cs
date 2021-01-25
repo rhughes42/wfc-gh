@@ -15,6 +15,7 @@ namespace WFC
     {
         public Mesh Geometry { get; set; }
         public List<Edge> Edges { get; set; }
+        public Point3d Origin { get; set; }
 
         /// <summary>
         /// Default (empty) constructor.
@@ -23,6 +24,7 @@ namespace WFC
         {
             this.Geometry = null;
             this.Edges = new List<Edge>() { new Edge() };
+            this.Origin = Point3d.Origin;
         }
 
         /// <summary>
@@ -37,6 +39,8 @@ namespace WFC
 
             this.Geometry = m;
             this.Edges = edges;
+
+            this.Origin = m.GetBoundingBox(true).Min;
         }
 
         /// <summary>
@@ -58,6 +62,13 @@ namespace WFC
                 edgeList.Add(new Edge(edgeName[i], edgeType[i]));
             }
             this.Edges = edgeList;
+
+            this.Origin = m.GetBoundingBox(true).Min;
+        }
+
+        // Not implemented
+        public void GetBorder(int index)
+        { 
         }
 
         public override string ToString()
