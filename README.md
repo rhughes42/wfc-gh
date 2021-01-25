@@ -1,2 +1,2 @@
-# wfc-gh
+# WFC GH
 WFC for Grasshopper
