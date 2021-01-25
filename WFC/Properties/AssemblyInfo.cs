@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("WFC")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Wave function collapse modelling tools.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Schmidt Hammer Lassen Digital Practice")]
 [assembly: AssemblyProduct("WFC")]
 [assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]

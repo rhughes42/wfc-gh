@@ -26,7 +26,7 @@ namespace WFC
             get
             {
                 //Return a short string describing the purpose of this GHA library.
-                return "";
+                return "Wave function collapse modelling tools.";
             }
         }
         public override Guid Id
@@ -42,7 +42,7 @@ namespace WFC
             get
             {
                 //Return a string identifying you or your company.
-                return "";
+                return "Schmidt Hammer Lassen Digital Practice";
             }
         }
         public override string AuthorContact
@@ -50,7 +50,7 @@ namespace WFC
             get
             {
                 //Return a string representing your preferred contact details.
-                return "";
+                return "rhu@shl.dk";
             }
         }
     }
