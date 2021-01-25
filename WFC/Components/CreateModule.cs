@@ -23,7 +23,7 @@ namespace WFC.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddMeshParameter("Mesh", "Mesh", "A list of the mesh geometry to be represented.", GH_ParamAccess.list);
-            pManager.AddTextParameter("Edges", "Edges", "A list of the edges to connect the module.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Edges", "Edges", "A list of the edges to connect the module.", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -31,6 +31,7 @@ namespace WFC.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddGenericParameter("Modules", "Modules", "Output module list.", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -39,6 +40,17 @@ namespace WFC.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            List<Mesh> geometry = new List<Mesh>();
+            List<Edge> edges = new List<Edge>();
+
+            if (!DA.GetDataList(0, geometry)) { return; }
+            if (!DA.GetDataList(1, edges)) { return; }
+
+            Module module = new Module(geometry, edges);
+
+            this.Message = module.ToString();
+
+            DA.SetData(0, module);
         }
 
         /// <summary>
