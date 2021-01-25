@@ -49,6 +49,7 @@ namespace WFC.Components
             if (!DA.GetData(1, ref rotate)) { return; }
             if (!DA.GetData(2, ref reflect)) { return; }
 
+            // Reflect the tile through the YZ and ZX planes.
             if (reflect)
             {
                 List<Module> reflected = new List<Module>();
@@ -69,6 +70,22 @@ namespace WFC.Components
 
                     // Mirror Y
                     List<Edge> yEdges = new List<Edge> { m.Edges[0], m.Edges[3], m.Edges[2], m.Edges[1] };
+                    Plane yPlane = Plane.WorldZX;
+                    yPlane.Origin = yGeo.GetBoundingBox(true).Center;
+                    Transform yForm = Transform.Mirror(yPlane);
+                    yGeo.Transform(yForm);
+
+                    reflected.Add(new Module(yGeo, yEdges));
+                }
+                // Important - make sure to rotate the newly augmented tiles too!
+                modules = reflected;
+            }
+
+            if (rotate)
+            {
+                List<Module> rotated = new List<Module>();
+                foreach (Module m in modules)
+                {
                 }
             }
         }
