@@ -66,11 +66,6 @@ namespace WFC
             this.Origin = m.GetBoundingBox(true).Min;
         }
 
-        // Not implemented
-        public void GetBorder(int index)
-        { 
-        }
-
         public override string ToString()
         {
             return String.Format("Module: {0} Edges", this.Edges.Count.ToString());
