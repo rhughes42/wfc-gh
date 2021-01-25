@@ -59,6 +59,11 @@ namespace WFC
             }
             this.Edges = edgeList;
         }
+
+        public override string ToString()
+        {
+            return String.Format("Module: {0} Edges", this.Edges.Count.ToString());
+        }
     }
 
     public class Edge
@@ -84,6 +89,11 @@ namespace WFC
         {
             this.Name = name;
             this.Type = type;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("Edge: {0} - {1}", this.Name.ToString(), this.Type.ToString());
         }
     }
 }
