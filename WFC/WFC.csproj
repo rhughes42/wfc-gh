@@ -56,6 +56,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Components\CreateModule.cs" />
+    <Compile Include="Components\CreateEdges.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="WFCComponent.cs" />
     <Compile Include="WFCInfo.cs" />
