@@ -28,6 +28,19 @@ namespace WFC
         }
 
         /// <summary>
+        /// Constructor with single mesh and edge list.
+        /// </summary>
+        /// <param name="geometry"></param>
+        /// <param name="edges"></param>
+        public Module(Mesh geometry, List<Edge> edges)
+        {
+            this.Geometry = geometry;
+            this.Edges = edges;
+
+            this.Origin = geometry.GetBoundingBox(true).Min;
+        }
+
+        /// <summary>
         /// Constructor with predefined edge list.
         /// </summary>
         /// <param name="geometry"></param>

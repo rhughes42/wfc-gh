@@ -49,15 +49,26 @@ namespace WFC.Components
             if (!DA.GetData(1, ref rotate)) { return; }
             if (!DA.GetData(2, ref reflect)) { return; }
 
-            if (rotate)
+            if (reflect)
             {
-                foreach(Module m in Module)
+                List<Module> reflected = new List<Module>();
+                foreach (Module m in modules)
                 {
-                    List<Edge> rotEdges = new List<Edge>();
-                    rotEdges = (m.edges[0][0], m.edges[0][1] * 2 % 3),
-                    (m.edges[3][0], m.edges[3][1] * 2 % 3),
-                    (m.edges[2][0], m.edges[2][1] * 2 % 3),
-                    (m.edges[1][0], m.edges[1][1] * 2 % 3)]
+                    reflected.Add(m); // Add the standard tile
+                    Mesh xGeo = m.Geometry.DuplicateMesh();
+                    Mesh yGeo = m.Geometry.DuplicateMesh();
+
+                    // Mirror X
+                    List<Edge> xEdges = new List<Edge> { m.Edges[2], m.Edges[1], m.Edges[0], m.Edges[3] };
+                    Plane xPlane = Plane.WorldYZ;
+                    xPlane.Origin = xGeo.GetBoundingBox(true).Center;
+                    Transform xForm = Transform.Mirror(xPlane);
+                    xGeo.Transform(xForm);
+
+                    reflected.Add(new Module(xGeo, xEdges));
+
+                    // Mirror Y
+                    List<Edge> yEdges = new List<Edge> { m.Edges[0], m.Edges[3], m.Edges[2], m.Edges[1] };
                 }
             }
         }
