@@ -119,7 +119,7 @@ namespace WFC.Components
                 modules = rotated;
             }
 
-            this.Message = String.Format("{0] Modules", modules.Count.ToString());
+            this.Message = String.Format("{0} Modules", modules.Count.ToString());
             DA.SetDataList(0, modules);
         }
 
