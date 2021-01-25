@@ -60,6 +60,7 @@
     <Compile Include="Components\CreateEdges.cs" />
     <Compile Include="Components\Augment.cs" />
     <Compile Include="Module.cs" />
+    <Compile Include="Util.cs" />
     <Compile Include="WFCInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

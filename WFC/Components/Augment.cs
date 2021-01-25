@@ -2,7 +2,6 @@
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
-
 namespace WFC.Components
 {
     public class Augment : GH_Component
@@ -86,6 +85,36 @@ namespace WFC.Components
                 List<Module> rotated = new List<Module>();
                 foreach (Module m in modules)
                 {
+                    Vector3d vec = Vector3d.ZAxis;
+                    Point3d center = m.Geometry.GetBoundingBox(true).Center;
+
+                    // No rotations
+                    List<Edge> oneEdges = new List<Edge> { m.Edges[0], m.Edges[1], m.Edges[2], m.Edges[3] };
+                    Mesh oneGeo = m.Geometry.DuplicateMesh();
+                    Transform oneRot = Transform.Rotation(Util.ToDegrees(0), vec, center);
+                    oneGeo.Transform(oneRot);
+                    rotated.Add(new Module(oneGeo, oneEdges));
+
+                    // One rotation
+                    List<Edge> twoEdges = new List<Edge> { m.Edges[3], m.Edges[0], m.Edges[1], m.Edges[2] };
+                    Mesh twoGeo = m.Geometry.DuplicateMesh();
+                    Transform twoRot = Transform.Rotation(Util.ToDegrees(90), vec, center);
+                    twoGeo.Transform(twoRot);
+                    rotated.Add(new Module(twoGeo, twoEdges));
+
+                    // Two rotations
+                    List<Edge> threeEdges = new List<Edge> { m.Edges[2], m.Edges[3], m.Edges[0], m.Edges[1] };
+                    Mesh threeGeo = m.Geometry.DuplicateMesh();
+                    Transform threeRot = Transform.Rotation(Util.ToDegrees(180), vec, center);
+                    threeGeo.Transform(threeRot);
+                    rotated.Add(new Module(threeGeo, threeEdges));
+
+                    // Three rotations
+                    List<Edge> fourEdges = new List<Edge> { m.Edges[1], m.Edges[2], m.Edges[3], m.Edges[0] };
+                    Mesh fourGeo = m.Geometry.DuplicateMesh();
+                    Transform fourRot = Transform.Rotation(Util.ToDegrees(270), vec, center);
+                    fourGeo.Transform(fourRot);
+                    rotated.Add(new Module(fourGeo, fourEdges));
                 }
             }
         }
