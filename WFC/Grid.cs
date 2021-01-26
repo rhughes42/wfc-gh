@@ -76,10 +76,47 @@ namespace WFC
             this.Contradiction = false;
         }
 
-        public bool Propogate(int x, int y)
+        public bool Propogate(Cell cell, int x, int y)
         {
             this.Steps += 1;
             if (this.Steps > this.MaxSteps) return false;
+
+            List<double[]> nCoords = GetNeighbours(cell);
+
+            for (int i = 0; i < nCoords.Count; i++)
+            {
+                double[] nC = nCoords[i];
+
+                // Skip the neighbour if there is none.
+                if (double.IsNaN(nC[0]) && double.IsNaN(nC[1])) continue;
+                int nX = (int)nC[0];
+                int nY = (int)nC[1];
+
+                Cell neighbour = this.Matrix[nX][nY];
+                List<Edge> nEdges = GetBorder((i + 2) % 4);
+                List<Edge> cEdges = GetBorder(i);
+
+                /*
+                 *  #First update based on neighbours. keep only edges_cell that are in edges_neighour
+                    #print ['N', 'E', 'S', 'W'][i], 'cell:', edges_cell, 'neighbour:', edges_neighour
+                */
+
+                foreach (Edge e in cEdges)
+                {
+                    Edge eOpp = new Edge(e.Name, (e.Type * 2) % 3);
+                    if (!nEdges.Contains(eOpp))
+                    {
+                        // Remove the possibilities that rely on this.
+                        HashSet<Module> reliantSet = new HashSet<Module>();
+                        foreach (Module m in this.Matrix[x][y].Modules)
+                        {
+                            if (m.Edges[i] == e)
+                                reliantSet.Add(m);
+                        }
+                    }
+                }
+
+            }
 
             return true;
         }
@@ -120,46 +157,6 @@ namespace WFC
                 }
             }
         }
-    }
-
-    public class Cell
-    {
-        public Grid GridInstance { get; set; }
-        public int X { get; set; }
-        public int Y { get; set; }
-        public List<double[]> Neighbours { get; set; }
-        public List<Module> Modules { get; set; }
-        public bool Certain { get; set; }
-
-        public Cell(Grid grid, int x, int y, List<Module> modules)
-        {
-            this.GridInstance = grid;
-            this.X = x;
-            this.Y = y;
-            this.Modules = modules;
-
-            List<double[]> nCoords = GetNeighbours();
-
-            for(int i = 0; i < nCoords.Count; i++)
-            {
-                double[] nC = nCoords[i];
-
-                // Skip the neighbour if there is none.
-                if (double.IsNaN(nC[0]) && double.IsNaN(nC[1])) continue;
-                int nX = (int)nC[0];
-                int nY = (int)nC[1];
-
-                Cell neighbour = this.GridInstance.Matrix[nX][nY];
-                List<Edge> nEdges = neighbour.GetBorder(i);
-                List<Edge> cEdges = this.GridInstance.Matrix[x][y].GetBorder(i);
-
-                /*
-                 *  #First update based on neighbours. keep only edges_cell that are in edges_neighour
-                    #print ['N', 'E', 'S', 'W'][i], 'cell:', edges_cell, 'neighbour:', edges_neighour
-                */
-
-            }
-        }
 
         /// <summary>
         /// Return an unsorted set of edges
@@ -183,15 +180,15 @@ namespace WFC
         /// of the cell.
         /// </summary>
         /// <returns></returns>
-        public List<double[]> GetNeighbours()
+        public List<double[]> GetNeighbours(Cell cell)
         {
-            int x = this.X;
-            int y = this.Y;
+            int x = cell.X;
+            int y = cell.Y;
 
             List<double> nX = new List<double>();
             List<double> nY = new List<double>();
 
-            if (y < this.GridInstance.ExtentsY - 1)
+            if (y < cell.GridInstance.ExtentsY - 1)
             {
                 nX.Add(x); nY.Add(y + 1);
             }
@@ -199,7 +196,7 @@ namespace WFC
             {
                 nX.Add(double.NaN); nY.Add(double.NaN);
             }
-            if (x < this.GridInstance.ExtentsX - 1)
+            if (x < cell.GridInstance.ExtentsX - 1)
             {
                 nX.Add(x + 1); nY.Add(y);
             }
@@ -225,13 +222,31 @@ namespace WFC
             }
 
             List<double[]> coords = new List<double[]>();
-            for(int i = 0; i < nX.Count; i++)
+            for (int i = 0; i < nX.Count; i++)
             {
                 double[] c = { nX[i], nY[i] };
                 coords.Add(c);
             }
 
             return coords;
+        }
+    }
+
+    public class Cell
+    {
+        public Grid GridInstance { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public List<double[]> Neighbours { get; set; }
+        public List<Module> Modules { get; set; }
+        public bool Certain { get; set; }
+
+        public Cell(Grid grid, int x, int y, List<Module> modules)
+        {
+            this.GridInstance = grid;
+            this.X = x;
+            this.Y = y;
+            this.Modules = modules;
         }
 
         /// <summary>
