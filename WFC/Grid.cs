@@ -76,11 +76,12 @@ namespace WFC
             this.Contradiction = false;
         }
 
-        public bool Propogate(Cell cell, int x, int y)
+        public bool Propogate(int x, int y)
         {
             this.Steps += 1;
             if (this.Steps > this.MaxSteps) return false;
 
+            Cell cell = this.Matrix[x][y];
             List<double[]> nCoords = GetNeighbours(cell);
 
             for (int i = 0; i < nCoords.Count; i++)
@@ -96,11 +97,7 @@ namespace WFC
                 List<Edge> nEdges = GetBorder((i + 2) % 4);
                 List<Edge> cEdges = GetBorder(i);
 
-                /*
-                 *  #First update based on neighbours. keep only edges_cell that are in edges_neighour
-                    #print ['N', 'E', 'S', 'W'][i], 'cell:', edges_cell, 'neighbour:', edges_neighour
-                */
-
+                // First, update based on neighbours. Keep only cell edges that are in the neighbouring cells.
                 foreach (Edge e in cEdges)
                 {
                     Edge eOpp = new Edge(e.Name, (e.Type * 2) % 3);
@@ -113,9 +110,19 @@ namespace WFC
                             if (m.Edges[i] == e)
                                 reliantSet.Add(m);
                         }
+                        this.Modules = reliantSet.ToList();
                     }
                 }
 
+                // Secondly, check if the neighbour needs to be propogated.
+                foreach (Edge e in nEdges)
+                {
+                    Edge eOpp = new Edge(e.Name, (e.Type * 2) % 3);
+                    if (!cEdges.Contains(eOpp))
+                    {
+                        Propogate(nX, nY); // Recursive?
+                    }
+                }
             }
 
             return true;
