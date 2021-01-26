@@ -105,6 +105,11 @@ namespace WFC
             return edges.ToList();
         }
 
+        /// <summary>
+        /// Return the neighbouring coordinates
+        /// of the cell.
+        /// </summary>
+        /// <returns></returns>
         public List<int> GetNeighbours()
         {
             int x = this.X;
