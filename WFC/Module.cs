@@ -87,7 +87,7 @@ namespace WFC
 
     /// <summary>
     /// Default edge class to hold
-    /// connectivity information.
+    /// connectivity i
     /// </summary>
     public class Edge
     {

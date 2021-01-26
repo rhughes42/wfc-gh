@@ -20,6 +20,10 @@ namespace WFC
         public List<List<Cell>> Matrix { get; set; }
         public List<List<bool>> Uncertain { get; set; }
         public bool Contradiction { get; set; }
+        public List<List<Mesh>> Geometry { get; set; }
+        public List<List<string>> Text { get; set; }
+        public int Steps { get; set; }
+        public int MaxSteps { get; set; }
 
         /// <summary>
         /// Default (empty) constructor.
@@ -54,11 +58,11 @@ namespace WFC
         public void Initialize()
         {
             // Set up the grid and uncertainty matrices.
-            for(int i = 0; i < this.ExtentsX; i++)
+            for (int i = 0; i < this.ExtentsX; i++)
             {
                 List<Cell> row = new List<Cell>();
                 List<bool> uncertain = new List<bool>();
-                for(int j = 0; j < this.ExtentsY; j++)
+                for (int j = 0; j < this.ExtentsY; j++)
                 {
                     Cell cell = new Cell(this, i, j, this.Modules);
                     row.Add(cell);
@@ -72,9 +76,12 @@ namespace WFC
             this.Contradiction = false;
         }
 
-        public void Propogate()
+        public bool Propogate(int x, int y)
         {
-            throw new NotImplementedException();
+            this.Steps += 1;
+            if (this.Steps > this.MaxSteps) return false;
+
+            return true;
         }
 
         public void Compute()
@@ -82,9 +89,36 @@ namespace WFC
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Attempt to collapse each cell in the grid
+        /// and compute the final geometry.
+        /// </summary>
         public void GetGeometry()
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < this.ExtentsX; i++)
+            {
+                for (int j = 0; j < this.ExtentsY; j++)
+                {
+                    Cell cell = this.Matrix[i][j];
+                    int possibilities = cell.Modules.Count;
+                    if (possibilities == 1)
+                    {
+                        if (cell.Collapse(out Mesh geo))
+                        {
+                            this.Geometry[i][j] = geo;
+                            this.Uncertain[i][j] = false;
+                        }
+                    }
+                    else
+                    {
+                        // TODO: Implement Z as third position.
+                        this.Text[i][j] = String.Format("X:{0}, Y:{1}, P:{2}",
+                            (i * this.SizeX).ToString(),
+                            (j * this.SizeY).ToString(),
+                            possibilities.ToString());
+                    }
+                }
+            }
         }
     }
 
@@ -93,9 +127,9 @@ namespace WFC
         public Grid GridInstance { get; set; }
         public int X { get; set; }
         public int Y { get; set; }
-        public int nX { get; set; }
-        public int nY { get; set; }
+        public List<double[]> Neighbours { get; set; }
         public List<Module> Modules { get; set; }
+        public bool Certain { get; set; }
 
         public Cell(Grid grid, int x, int y, List<Module> modules)
         {
@@ -104,9 +138,9 @@ namespace WFC
             this.Y = y;
             this.Modules = modules;
 
-            List<int> nCoords = GetNeighbours();
-            nX = nCoords[0];
-            nY = nCoords[1];
+            List<double[]> nCoords = GetNeighbours();
+
+
         }
 
         /// <summary>
@@ -131,32 +165,52 @@ namespace WFC
         /// of the cell.
         /// </summary>
         /// <returns></returns>
-        public List<int> GetNeighbours()
+        public List<double[]> GetNeighbours()
         {
             int x = this.X;
             int y = this.Y;
 
-            List<int> coords = new List<int>();
+            List<double> nX = new List<double>();
+            List<double> nY = new List<double>();
 
             if (y < this.GridInstance.ExtentsY - 1)
             {
-                coords.Add(x);
-                coords.Add(y + 1);
+                nX.Add(x); nY.Add(y + 1);
+            }
+            else
+            {
+                nX.Add(double.NaN); nY.Add(double.NaN);
             }
             if (x < this.GridInstance.ExtentsX - 1)
             {
-                coords.Add(x + 1);
-                coords.Add(y);
+                nX.Add(x + 1); nY.Add(y);
+            }
+            else
+            {
+                nX.Add(double.NaN); nY.Add(double.NaN);
             }
             if (y > 0)
             {
-                coords.Add(x);
-                coords.Add(y - 1);
+                nX.Add(x); nY.Add(y - 1);
+            }
+            else
+            {
+                nX.Add(double.NaN); nY.Add(double.NaN);
             }
             if (x > 0)
             {
-                coords.Add(x - 1);
-                coords.Add(y);
+                nX.Add(x - 1); nY.Add(y);
+            }
+            else
+            {
+                nX.Add(double.NaN); nY.Add(double.NaN);
+            }
+
+            List<double[]> coords = new List<double[]>();
+            for(int i = 0; i < nX.Count; i++)
+            {
+                double[] c = { nX[i], nY[i] };
+                coords.Add(c);
             }
 
             return coords;
@@ -166,15 +220,13 @@ namespace WFC
         /// Attempt to collapse the cell.
         /// </summary>
         /// <returns></returns>
-        public bool Collapse()
+        public bool Collapse(out Mesh meshOut)
         {
             try
             {
                 var rand = new Random();
                 // Choose a random module from the remaining modules.
                 Module mod = this.Modules[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, this.Modules.Count - 1)];
-                this.Modules.Clear();
-                this.Modules.Add(mod);
 
                 Mesh geo = mod.Geometry.DuplicateMesh();
 
@@ -185,11 +237,10 @@ namespace WFC
                 Transform xForm = Transform.Translation(vec);
                 geo.Transform(xForm);
 
-                mod.Geometry = geo;
-
+                meshOut = geo;
                 return true;
             }
-            catch { return false; }
+            catch { meshOut = null; return false; }
         }
     }
 }
