@@ -57,6 +57,7 @@ namespace WFC
 
         public void Initialize()
         {
+            this.Steps = 0;
             // Set up the grid and uncertainty matrices.
             for (int i = 0; i < this.ExtentsX; i++)
             {

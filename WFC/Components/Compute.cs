@@ -25,7 +25,7 @@ namespace WFC.Components
             pManager.AddGenericParameter("Grid", "Grid", "A grid to perform WFC on.", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Steps", "Steps", "Maximum number of steps to run.", GH_ParamAccess.item, 1000);
             pManager.AddIntegerParameter("Seed", "Seed", "Random seed to start wave collapse.", GH_ParamAccess.item, 400);
-            pManager.AddBooleanParameter("Run", "Run", "Run the algorithm", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Run", "Run", "Run the algorithm.", GH_ParamAccess.item, false);
         }
 
         /// <summary>
@@ -33,7 +33,10 @@ namespace WFC.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddTextParameter("Log", "Log", "Algorithm log.", GH_ParamAccess.list);
         }
+
+        Grid grid = null;
 
         /// <summary>
         /// This is the method that actually does the work.
@@ -41,7 +44,6 @@ namespace WFC.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Grid grid = new Grid();
             int steps = 1000;
             int seed = 400;
             bool run = false;
@@ -53,11 +55,27 @@ namespace WFC.Components
 
             List<Mesh> geo = new List<Mesh>();
             List<string> text = new List<string>();
-            List<string> debug = new List<string>();
+            List<string> log = new List<string>();
 
+            if(grid.Uncertain > 0)
+            {
+                log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
 
+                grid.Steps += 1;
+                if (grid.Steps > grid.MaxSteps)
+                {
+                    log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping.", grid.MaxSteps.ToString()));
+                }
 
-            DA.SetDataList(0, debug);
+                // Choose a random cell from the available cells.
+                var rand = new Random();
+                List<Cell> row = grid.Matrix[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, grid.Matrix[0].Count - 1)];
+                Cell start = row[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, row.Count - 1)];
+
+                log.Add(String.Format("Propogating wave from cell: {0},{1}", start.X.ToString(), start.Y.ToString()));
+            }
+
+            DA.SetDataList(0, log);
         }
 
         /// <summary>
