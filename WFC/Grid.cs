@@ -140,7 +140,25 @@ namespace WFC
 
             List<double[]> nCoords = GetNeighbours();
 
+            for(int i = 0; i < nCoords.Count; i++)
+            {
+                double[] nC = nCoords[i];
 
+                // Skip the neighbour if there is none.
+                if (double.IsNaN(nC[0]) && double.IsNaN(nC[1])) continue;
+                int nX = (int)nC[0];
+                int nY = (int)nC[1];
+
+                Cell neighbour = this.GridInstance.Matrix[nX][nY];
+                List<Edge> nEdges = neighbour.GetBorder(i);
+                List<Edge> cEdges = this.GridInstance.Matrix[x][y].GetBorder(i);
+
+                /*
+                 *  #First update based on neighbours. keep only edges_cell that are in edges_neighour
+                    #print ['N', 'E', 'S', 'W'][i], 'cell:', edges_cell, 'neighbour:', edges_neighour
+                */
+
+            }
         }
 
         /// <summary>
