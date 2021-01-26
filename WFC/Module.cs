@@ -85,6 +85,10 @@ namespace WFC
         }
     }
 
+    /// <summary>
+    /// Default edge class to hold
+    /// connectivity information.
+    /// </summary>
     public class Edge
     {
         public string Name { get; set; }
