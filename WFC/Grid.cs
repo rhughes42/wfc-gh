@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rhino.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -69,13 +70,22 @@ namespace WFC
     public class Cell
     {
         public Grid GridInstance { get; set; }
-        public List<int> Coords { get; set; }
-        public List<int> NeighbourCoords { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int nX { get; set; }
+        public int nY { get; set; }
         public List<Module> Modules { get; set; }
 
-        public Cell()
+        public Cell(Grid grid, int x, int y, List<Module> modules)
         {
+            this.GridInstance = grid;
+            this.X = x;
+            this.Y = y;
+            this.Modules = modules;
 
+            List<int> nCoords = GetNeighbours();
+            nX = nCoords[0];
+            nY = nCoords[1];
         }
 
         /// <summary>
@@ -97,8 +107,8 @@ namespace WFC
 
         public List<int> GetNeighbours()
         {
-            int x = this.Coords[0];
-            int y = this.Coords[1];
+            int x = this.X;
+            int y = this.Y;
 
             List<int> coords = new List<int>();
 
@@ -126,9 +136,34 @@ namespace WFC
             return coords;
         }
 
-        public void Collapse()
+        /// <summary>
+        /// Attempt to collapse the cell.
+        /// </summary>
+        /// <returns></returns>
+        public bool Collapse()
         {
-            throw new NotImplementedException();
+            try
+            {
+                var rand = new Random();
+                // Choose a random module from the remaining modules.
+                Module mod = this.Modules[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, this.Modules.Count - 1)];
+                this.Modules.Clear();
+                this.Modules.Add(mod);
+
+                Mesh geo = mod.Geometry.DuplicateMesh();
+
+                // TODO: Implement 3D positioning.
+                Point3d pt = new Point3d(this.X * this.GridInstance.SizeX, this.Y * this.GridInstance.SizeY, 0);
+
+                Vector3d vec = new Vector3d(pt - mod.Origin);
+                Transform xForm = Transform.Translation(vec);
+                geo.Transform(xForm);
+
+                mod.Geometry = geo;
+
+                return true;
+            }
+            catch { return false; }
         }
     }
 }
