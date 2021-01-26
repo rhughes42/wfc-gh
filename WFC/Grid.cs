@@ -14,8 +14,7 @@ namespace WFC
     {
         public int ExtentsX { get; set; }
         public int ExtentsY { get; set; }
-        public int SizeX { get; set; }
-        public int SizeY { get; set; }
+        public int Size { get; set; }
 
         public List<Module> Modules { get; set; }
         public List<List<Cell>> Matrix { get; set; }
@@ -35,8 +34,7 @@ namespace WFC
         {
             this.ExtentsX = 10;
             this.ExtentsY = 10;
-            this.SizeX = 6;
-            this.SizeY = 6;
+            this.Size = 6;
         }
 
         /// <summary>
@@ -47,12 +45,11 @@ namespace WFC
         /// <param name="sizeX"></param>
         /// <param name="sizeY"></param>
         /// <param name="modules"></param>
-        public Grid(int extX, int extY, int sizeX, int sizeY, List<Module> modules)
+        public Grid(int extX, int extY, int size, List<Module> modules)
         {
             this.ExtentsX = extX;
             this.ExtentsY = extY;
-            this.SizeX = sizeX;
-            this.SizeY = sizeY;
+            this.Size = size;
             this.Modules = modules;
 
             Initialize();
@@ -157,15 +154,15 @@ namespace WFC
                         if (cell.Collapse(out Mesh geo))
                         {
                             this.Geometry[i][j] = geo;
-                            this.Uncertain[i][j] = false;
+                            this.Uncertain -= 1;
                         }
                     }
                     else
                     {
                         // TODO: Implement Z as third position.
                         this.Text[i][j] = String.Format("X:{0}, Y:{1}, P:{2}",
-                            (i * this.SizeX).ToString(),
-                            (j * this.SizeY).ToString(),
+                            (i * this.Size).ToString(),
+                            (j * this.Size).ToString(),
                             possibilities.ToString());
                     }
                 }
@@ -278,7 +275,7 @@ namespace WFC
                 Mesh geo = mod.Geometry.DuplicateMesh();
 
                 // TODO: Implement 3D positioning.
-                Point3d pt = new Point3d(this.X * this.GridInstance.SizeX, this.Y * this.GridInstance.SizeY, 0);
+                Point3d pt = new Point3d(this.X * this.GridInstance.Size, this.Y * this.GridInstance.Size, 0);
 
                 Vector3d vec = new Vector3d(pt - mod.Origin);
                 Transform xForm = Transform.Translation(vec);

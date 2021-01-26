@@ -59,6 +59,8 @@
     <Compile Include="Components\CreateModule.cs" />
     <Compile Include="Components\CreateEdges.cs" />
     <Compile Include="Components\Augment.cs" />
+    <Compile Include="Components\Compute.cs" />
+    <Compile Include="Components\CreateGrid.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Util.cs" />
