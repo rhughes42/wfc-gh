@@ -35,6 +35,8 @@ namespace WFC
             this.ExtentsX = 10;
             this.ExtentsY = 10;
             this.Size = 6;
+
+            this.Steps = 0;
         }
 
         /// <summary>
@@ -52,12 +54,24 @@ namespace WFC
             this.Size = size;
             this.Modules = modules;
 
+            this.Steps = 0;
+
             Initialize();
         }
 
-        public void Initialize()
+        /// <summary>
+        /// Reset the step counter.
+        /// </summary>
+        public void Reset()
         {
             this.Steps = 0;
+        }
+
+        /// <summary>
+        /// Default initialization of the grid.
+        /// </summary>
+        public void Initialize()
+        {
             // Set up the grid and uncertainty matrices.
             for (int i = 0; i < this.ExtentsX; i++)
             {
@@ -74,6 +88,12 @@ namespace WFC
             this.Contradiction = false;
         }
 
+        /// <summary>
+        /// Propogate the wave through the grid.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
         public bool Propogate(int x, int y)
         {
             this.Steps += 1;
@@ -244,6 +264,9 @@ namespace WFC
         }
     }
 
+    /// <summary>
+    /// General cell class.
+    /// </summary>
     public class Cell
     {
         public Grid GridInstance { get; set; }
@@ -253,6 +276,13 @@ namespace WFC
         public List<Module> Modules { get; set; }
         public bool Certain { get; set; }
 
+        /// <summary>
+        /// Default (empty) constructor class.
+        /// </summary>
+        /// <param name="grid"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="modules"></param>
         public Cell(Grid grid, int x, int y, List<Module> modules)
         {
             this.GridInstance = grid;

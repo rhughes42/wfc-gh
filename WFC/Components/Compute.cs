@@ -57,6 +57,7 @@ namespace WFC.Components
             List<string> text = new List<string>();
             List<string> log = new List<string>();
 
+            // If there are still uncertain cells in the grid.
             if(grid.Uncertain > 0)
             {
                 log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
@@ -64,7 +65,7 @@ namespace WFC.Components
                 grid.Steps += 1;
                 if (grid.Steps > grid.MaxSteps)
                 {
-                    log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping.", grid.MaxSteps.ToString()));
+                    log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping...", grid.MaxSteps.ToString()));
                 }
 
                 // Choose a random cell from the available cells.
@@ -72,8 +73,23 @@ namespace WFC.Components
                 List<Cell> row = grid.Matrix[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, grid.Matrix[0].Count - 1)];
                 Cell start = row[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, row.Count - 1)];
 
-                log.Add(String.Format("Propogating wave from cell: {0},{1}", start.X.ToString(), start.Y.ToString()));
+                log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
+                start.Collapse(out Mesh m);
+                geo.Add(m);
+
+                grid.Propogate(start.X, start.Y);
+
+                this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 0, 100).ToString());
+
+                if (grid.Contradiction)
+                    grid.Initialize();
             }
+            else
+            {
+                this.Message = "WFC Complete";
+            }
+
+            ExpireSolution(true);
 
             DA.SetDataList(0, log);
         }
