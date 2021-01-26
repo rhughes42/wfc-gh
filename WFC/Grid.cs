@@ -17,6 +17,9 @@ namespace WFC
         public int SizeX { get; set; }
         public int SizeY { get; set; }
         public List<Module> Modules { get; set; }
+        public List<List<Cell>> Matrix { get; set; }
+        public List<List<bool>> Uncertain { get; set; }
+        public bool Contradiction { get; set; }
 
         /// <summary>
         /// Default (empty) constructor.
@@ -44,11 +47,29 @@ namespace WFC
             this.SizeX = sizeX;
             this.SizeY = sizeY;
             this.Modules = modules;
+
+            Initialize();
         }
 
         public void Initialize()
         {
-            throw new NotImplementedException();
+            // Set up the grid and uncertainty matrices.
+            for(int i = 0; i < this.ExtentsX; i++)
+            {
+                List<Cell> row = new List<Cell>();
+                List<bool> uncertain = new List<bool>();
+                for(int j = 0; j < this.ExtentsY; j++)
+                {
+                    Cell cell = new Cell(this, i, j, this.Modules);
+                    row.Add(cell);
+                    uncertain.Add(true);
+                }
+                this.Matrix.Add(row);
+                this.Uncertain.Add(uncertain);
+                row.Clear();
+                uncertain.Clear();
+            }
+            this.Contradiction = false;
         }
 
         public void Propogate()
