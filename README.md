@@ -1,18 +1,18 @@
 # WFC GH
 WFC for Grasshopper
 
-# Installation
+## Installation
 
-# Dependencies
+## Dependencies
 
-# Overview
+## Overview
 
-# Usage
+## Usage
 
-## Create Modules
+### Create Modules
 
-## Augment Modules
+### Augment Modules
 
-## Create Grid
+### Create Grid
 
-## Compute Solution
+### Compute Solution
