@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\..\hughesr\AppData\Roaming\Grasshopper\Libraries\WFC\</OutputPath>
+    <OutputPath>..\..\..\AppData\Roaming\Grasshopper\Libraries\WFC\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
@@ -76,8 +76,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
-Erase "$(TargetPath)"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <FallbackCulture>en-US</FallbackCulture>
