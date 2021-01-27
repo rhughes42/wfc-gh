@@ -1,5 +1,5 @@
 # WFC GH
-WFC for Grasshopper
+WFC for Grasshopper based on https://github.com/mxgmn/WaveFunctionCollapse and https://bitbucket.org/mxgmn/basic3dwfc/src/master/
 
 ## Installation
 
