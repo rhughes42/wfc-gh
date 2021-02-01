@@ -77,15 +77,13 @@ namespace WFC
             // Set up the grid and uncertainty matrices.
             for (int i = 0; i < this.ExtentsX; i++)
             {
-                List<Cell> row = new List<Cell>();
+                matrix.Add(new List<Cell>());
                 for (int j = 0; j < this.ExtentsY; j++)
                 {
                     Cell cell = new Cell(this, i, j, this.Modules);
-                    row.Add(cell);
+                    matrix[i].Add(cell);
                     Uncertain++;
                 }
-                this.Matrix.Add(row);
-                row.Clear();
             }
             this.Contradiction = false;
             this.Matrix = matrix;
