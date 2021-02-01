@@ -64,6 +64,9 @@ namespace WFC.Components
                 List<Cell> row = grid.Matrix[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, grid.Matrix[0].Count - 1)];
                 Cell start = row[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, row.Count - 1)];
 
+                start.Collapse(out Mesh m);
+                geo.Add(m);
+
                 // If there are still uncertain cells in the grid.
                 if (grid.Uncertain > 0)
                 {
@@ -76,12 +79,10 @@ namespace WFC.Components
                     }
 
                     log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
-                    start.Collapse(out Mesh m);
-                    geo.Add(m);
-
+                    
                     grid.Propogate(start.X, start.Y);
 
-                    this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 0, 100).ToString());
+                    this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 100, 0).ToString());
 
                     if (grid.Contradiction)
                         grid.Initialize();

@@ -56,7 +56,21 @@ namespace WFC
 
             this.Steps = 0;
 
-            Initialize();
+            List<List<Cell>> matrix = new List<List<Cell>>();
+
+            // Set up the grid and uncertainty matrices.
+            for (int i = 0; i < this.ExtentsX; i++)
+            {
+                matrix.Add(new List<Cell>());
+                for (int j = 0; j < this.ExtentsY; j++)
+                {
+                    Cell cell = new Cell(this, i, j, this.Modules);
+                    matrix[i].Add(cell);
+                    Uncertain++;
+                }
+            }
+            this.Contradiction = false;
+            this.Matrix = matrix;
         }
 
         /// <summary>
