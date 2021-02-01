@@ -72,6 +72,8 @@ namespace WFC
         /// </summary>
         public void Initialize()
         {
+            List<List<Cell>> matrix = new List<List<Cell>>();
+
             // Set up the grid and uncertainty matrices.
             for (int i = 0; i < this.ExtentsX; i++)
             {
@@ -86,6 +88,7 @@ namespace WFC
                 row.Clear();
             }
             this.Contradiction = false;
+            this.Matrix = matrix;
         }
 
         /// <summary>
