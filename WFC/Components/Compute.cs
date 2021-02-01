@@ -65,7 +65,7 @@ namespace WFC.Components
                 Cell start = row[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, row.Count - 1)];
 
                 // If there are still uncertain cells in the grid.
-                while (grid.Uncertain > 0)
+                if (grid.Uncertain > 0)
                 {
                     log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
 
@@ -74,7 +74,6 @@ namespace WFC.Components
                     {
                         log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping...", grid.MaxSteps.ToString()));
                     }
-
 
                     log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
                     start.Collapse(out Mesh m);
