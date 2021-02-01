@@ -144,6 +144,7 @@ namespace WFC
                     }
                 }
 
+                /* CAUSES STACK OVERFLOW DUE TO NESTED LOOP
                 // Secondly, check if the neighbour needs to be propogated.
                 foreach (Edge e in nEdges)
                 {
@@ -153,6 +154,7 @@ namespace WFC
                         Propogate(nX, nY); // Recursive?
                     }
                 }
+                */
             }
 
             // If a cell only has one option left, mark it as certain.

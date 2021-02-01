@@ -68,7 +68,7 @@ namespace WFC.Components
                 geo.Add(m);
 
                 // If there are still uncertain cells in the grid.
-                if (grid.Uncertain > 0)
+                while (grid.Uncertain > 0)
                 {
                     log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
 
@@ -86,8 +86,6 @@ namespace WFC.Components
 
                     if (grid.Contradiction)
                         grid.Initialize();
-
-                    DA.SetDataList(0, log);
                 }
                 this.Message = "WFC Complete";
             }                       
