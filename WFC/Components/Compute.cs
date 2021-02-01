@@ -57,39 +57,40 @@ namespace WFC.Components
             List<string> text = new List<string>();
             List<string> log = new List<string>();
 
-            // If there are still uncertain cells in the grid.
-            if(grid.Uncertain > 0)
+            if (run)
             {
-                log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
-
-                grid.Steps += 1;
-                if (grid.Steps > grid.MaxSteps)
-                {
-                    log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping...", grid.MaxSteps.ToString()));
-                }
-
                 // Choose a random cell from the available cells.
                 var rand = new Random();
                 List<Cell> row = grid.Matrix[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, grid.Matrix[0].Count - 1)];
                 Cell start = row[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, row.Count - 1)];
 
-                log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
-                start.Collapse(out Mesh m);
-                geo.Add(m);
+                // If there are still uncertain cells in the grid.
+                while (grid.Uncertain > 0)
+                {
+                    log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
 
-                grid.Propogate(start.X, start.Y);
+                    grid.Steps += 1;
+                    if (grid.Steps > grid.MaxSteps)
+                    {
+                        log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping...", grid.MaxSteps.ToString()));
+                    }
 
-                this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 0, 100).ToString());
 
-                if (grid.Contradiction)
-                    grid.Initialize();
-            }
-            else
-            {
+                    log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
+                    start.Collapse(out Mesh m);
+                    geo.Add(m);
+
+                    grid.Propogate(start.X, start.Y);
+
+                    this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 0, 100).ToString());
+
+                    if (grid.Contradiction)
+                        grid.Initialize();
+
+                    DA.SetDataList(0, log);
+                }
                 this.Message = "WFC Complete";
-            }
-
-            ExpireSolution(true);
+            }                       
 
             DA.SetDataList(0, log);
         }

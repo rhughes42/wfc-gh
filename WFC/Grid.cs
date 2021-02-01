@@ -97,9 +97,6 @@ namespace WFC
         /// <returns></returns>
         public bool Propogate(int x, int y)
         {
-            this.Steps += 1;
-            if (this.Steps > this.MaxSteps) return false;
-
             Cell cell = this.Matrix[x][y];
             List<double[]> nCoords = GetNeighbours(cell);
 
