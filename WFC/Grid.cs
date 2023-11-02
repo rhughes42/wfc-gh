@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WFC
 {
@@ -121,7 +119,7 @@ namespace WFC
                 // Skip the neighbour if there is none.
                 if (double.IsNaN(nC[0]) && double.IsNaN(nC[1])) continue;
                 int nX = (int)nC[0];
-                int nY = (int)nC[1];    
+                int nY = (int)nC[1];
 
                 Cell neighbour = this.Matrix[nX][nY];
                 List<Edge> nEdges = GetBorder((i + 2) % 4);

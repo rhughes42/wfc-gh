@@ -13,6 +13,7 @@ namespace WFC
                 return "WFC";
             }
         }
+
         public override Bitmap Icon
         {
             get
@@ -21,6 +22,7 @@ namespace WFC
                 return null;
             }
         }
+
         public override string Description
         {
             get
@@ -29,6 +31,7 @@ namespace WFC
                 return "Wave function collapse modelling tools.";
             }
         }
+
         public override Guid Id
         {
             get
@@ -45,6 +48,7 @@ namespace WFC
                 return "Schmidt Hammer Lassen Digital Practice";
             }
         }
+
         public override string AuthorContact
         {
             get

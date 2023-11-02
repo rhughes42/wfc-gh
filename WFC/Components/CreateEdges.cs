@@ -1,5 +1,4 @@
 ﻿using Grasshopper.Kernel;
-using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 
@@ -48,7 +47,7 @@ namespace WFC.Components
 
             List<Edge> edgeList = new List<Edge>();
 
-            for(int i = 0; i < edgeName.Count; i++)
+            for (int i = 0; i < edgeName.Count; i++)
             {
                 edgeList.Add(new Edge(edgeName[i], edgeType[i]));
             }

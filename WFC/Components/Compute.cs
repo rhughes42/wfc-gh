@@ -36,7 +36,7 @@ namespace WFC.Components
             pManager.AddTextParameter("Log", "Log", "Algorithm log.", GH_ParamAccess.list);
         }
 
-        Grid grid = null;
+        private Grid grid = null;
 
         /// <summary>
         /// This is the method that actually does the work.
@@ -79,7 +79,7 @@ namespace WFC.Components
                     }
 
                     log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
-                    
+
                     grid.Propogate(start.X, start.Y);
 
                     this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 100, 0).ToString());
@@ -88,7 +88,7 @@ namespace WFC.Components
                         grid.Initialize();
                 }
                 this.Message = "WFC Complete";
-            }                       
+            }
 
             DA.SetDataList(0, log);
         }
