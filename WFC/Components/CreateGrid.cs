@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace WFC.Components
 {
+    /// <summary>
+    /// Creates a <see cref="WFC.Grid"/> instance from a tileset.
+    /// </summary>
     public class CreateGrid : GH_Component
     {
         /// <summary>
@@ -25,7 +28,7 @@ namespace WFC.Components
             pManager.AddGenericParameter("Modules", "Modules", "A list of module geometry to be represented.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Width", "Width", "A number representing the width of the grid in units.", GH_ParamAccess.item, 10);
             pManager.AddIntegerParameter("Length", "Length", "A number representing the length of the grid in units.", GH_ParamAccess.item, 10);
-            pManager.AddIntegerParameter("Size", "Size", "The size of the grid spacing in metres.", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Size", "Size", "The size of the grid spacing in model units.", GH_ParamAccess.item, 6);
         }
 
         /// <summary>
@@ -51,6 +54,12 @@ namespace WFC.Components
             if (!DA.GetData(1, ref width)) { return; }
             if (!DA.GetData(2, ref length)) { return; }
             if (!DA.GetData(3, ref size)) { return; }
+
+            if (modules.Count == 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "At least one module is required.");
+                return;
+            }
 
             Grid grid = new Grid(width, length, size, modules);
             this.Message = "OK";
