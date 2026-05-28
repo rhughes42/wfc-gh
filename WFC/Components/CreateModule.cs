@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace WFC.Components
 {
+    /// <summary>
+    /// Creates a <see cref="WFC.Module"/> from mesh geometry and an edge connector list.
+    /// </summary>
     public class CreateModule : GH_Component
     {
         /// <summary>
@@ -31,7 +34,7 @@ namespace WFC.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Modules", "Modules", "Output module list.", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Module", "Module", "Output module.", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -45,6 +48,12 @@ namespace WFC.Components
 
             if (!DA.GetDataList(0, geometry)) { return; }
             if (!DA.GetDataList(1, edges)) { return; }
+
+            if (edges.Count != 4)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Modules require exactly 4 edges in N,E,S,W order.");
+                return;
+            }
 
             Module module = new Module(geometry, edges);
 

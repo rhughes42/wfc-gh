@@ -4,6 +4,9 @@ using System.Drawing;
 
 namespace WFC
 {
+    /// <summary>
+    /// Grasshopper assembly metadata for the WFC plugin.
+    /// </summary>
     public class WFCInfo : GH_AssemblyInfo
     {
         public override string Name

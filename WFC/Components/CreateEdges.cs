@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace WFC.Components
 {
+    /// <summary>
+    /// Creates a list of <see cref="WFC.Edge"/> instances from name/type inputs.
+    /// </summary>
     public class CreateEdges : GH_Component
     {
         /// <summary>
@@ -45,6 +48,12 @@ namespace WFC.Components
 
             if (!DA.GetDataList(0, edgeName)) { return; }
             if (!DA.GetDataList(1, edgeType)) { return; }
+
+            if (edgeName.Count != edgeType.Count)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Name and Type lists must be the same length.");
+                return;
+            }
 
             List<Edge> edgeList = new List<Edge>();
 

@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace WFC.Components
 {
+    /// <summary>
+    /// Solves a <see cref="WFC.Grid"/> using Wave Function Collapse.
+    /// </summary>
     public class Compute : GH_Component
     {
         /// <summary>
@@ -33,6 +36,8 @@ namespace WFC.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddGenericParameter("Grid", "Grid", "The updated grid (contains the solved cell matrix).", GH_ParamAccess.item);
+            pManager.AddMeshParameter("Meshes", "Meshes", "Flattened list of output meshes for solved cells.", GH_ParamAccess.list);
             pManager.AddTextParameter("Log", "Log", "Algorithm log.", GH_ParamAccess.list);
         }
 
@@ -53,44 +58,18 @@ namespace WFC.Components
             if (!DA.GetData(2, ref seed)) { return; }
             if (!DA.GetData(3, ref run)) { return; }
 
-            List<Mesh> geo = new List<Mesh>();
-            List<string> text = new List<string>();
             List<string> log = new List<string>();
+            List<Mesh> meshes = new List<Mesh>();
 
             if (run)
             {
-                // Choose a random cell from the available cells.
-                var rand = new Random();
-                List<Cell> row = grid.Matrix[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, grid.Matrix[0].Count - 1)];
-                Cell start = row[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, row.Count - 1)];
-
-                start.Collapse(out Mesh m);
-                geo.Add(m);
-
-                // If there are still uncertain cells in the grid.
-                while (grid.Uncertain > 0)
-                {
-                    log.Add(String.Format("Uncertain cells remaining: {0}", grid.Uncertain.ToString()));
-
-                    grid.Steps += 1;
-                    if (grid.Steps > grid.MaxSteps)
-                    {
-                        log.Add(String.Format("Maximum step count ({0}) exceeded. Stopping...", grid.MaxSteps.ToString()));
-                    }
-
-                    log.Add(String.Format("Collapsing cell {0},{1}...", start.X.ToString(), start.Y.ToString()));
-                    
-                    grid.Propogate(start.X, start.Y);
-
-                    this.Message = String.Format("{0}%", Util.Remap(grid.Uncertain, 0, grid.ExtentsX * grid.ExtentsY, 100, 0).ToString());
-
-                    if (grid.Contradiction)
-                        grid.Initialize();
-                }
-                this.Message = "WFC Complete";
+                bool ok = grid.TrySolve(seed, steps, out meshes, out log);
+                this.Message = ok ? "WFC Complete" : "Failed";
             }                       
 
-            DA.SetDataList(0, log);
+            DA.SetData(0, grid);
+            DA.SetDataList(1, meshes);
+            DA.SetDataList(2, log);
         }
 
         /// <summary>

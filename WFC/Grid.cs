@@ -1,335 +1,503 @@
 ﻿using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WFC
 {
     /// <summary>
-    /// Our grid computation class.
+    /// Represents a 2D grid of cells for Wave Function Collapse.
     /// </summary>
     public class Grid
     {
-        public int ExtentsX { get; set; }
-        public int ExtentsY { get; set; }
-        public int Size { get; set; }
-
-        public List<Module> Modules { get; set; }
-        public List<List<Cell>> Matrix { get; set; }
-
-        public List<List<Mesh>> Geometry { get; set; }
-        public List<List<string>> Text { get; set; }
-        public int Steps { get; set; }
-        public int MaxSteps { get; set; }
-
-        public int Uncertain { get; set; }
-        public bool Contradiction { get; set; }
+        private static readonly (int dx, int dy)[] DirectionOffsets =
+        {
+            (0, -1), // North
+            (1, 0),  // East
+            (0, 1),  // South
+            (-1, 0), // West
+        };
 
         /// <summary>
-        /// Default (empty) constructor.
+        /// Initializes a new instance of the <see cref="Grid"/> class with default dimensions.
         /// </summary>
         public Grid()
         {
-            this.ExtentsX = 10;
-            this.ExtentsY = 10;
-            this.Size = 6;
+            ExtentsX = 10;
+            ExtentsY = 10;
+            Size = 6;
+            Modules = new List<Module>();
 
-            this.Steps = 0;
+            Reset();
         }
 
         /// <summary>
-        /// Standard constructor.
+        /// Initializes a new instance of the <see cref="Grid"/> class.
         /// </summary>
-        /// <param name="extX"></param>
-        /// <param name="extY"></param>
-        /// <param name="sizeX"></param>
-        /// <param name="sizeY"></param>
-        /// <param name="modules"></param>
+        /// <param name="extX">Grid width in cells.</param>
+        /// <param name="extY">Grid height in cells.</param>
+        /// <param name="size">Cell spacing (model units).</param>
+        /// <param name="modules">The tileset modules available for the solver.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="extX"/>, <paramref name="extY"/>, or <paramref name="size"/> is not positive.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="modules"/> is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="modules"/> is empty.</exception>
         public Grid(int extX, int extY, int size, List<Module> modules)
         {
-            this.ExtentsX = extX;
-            this.ExtentsY = extY;
-            this.Size = size;
-            this.Modules = modules;
+            if (extX <= 0) throw new ArgumentOutOfRangeException(nameof(extX), extX, "Grid width must be positive.");
+            if (extY <= 0) throw new ArgumentOutOfRangeException(nameof(extY), extY, "Grid height must be positive.");
+            if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size), size, "Cell size must be positive.");
+            if (modules == null) throw new ArgumentNullException(nameof(modules));
+            if (modules.Count == 0) throw new ArgumentException("Tileset must contain at least one module.", nameof(modules));
 
-            this.Steps = 0;
+            ExtentsX = extX;
+            ExtentsY = extY;
+            Size = size;
+            Modules = modules;
 
-            List<List<Cell>> matrix = new List<List<Cell>>();
-
-            // Set up the grid and uncertainty matrices.
-            for (int i = 0; i < this.ExtentsX; i++)
-            {
-                matrix.Add(new List<Cell>());
-                for (int j = 0; j < this.ExtentsY; j++)
-                {
-                    Cell cell = new Cell(this, i, j, this.Modules);
-                    matrix[i].Add(cell);
-                    Uncertain++;
-                }
-            }
-            this.Contradiction = false;
-            this.Matrix = matrix;
+            Reset();
+            Initialize();
         }
 
         /// <summary>
-        /// Reset the step counter.
+        /// Gets or sets the grid width in cells.
+        /// </summary>
+        public int ExtentsX { get; set; }
+
+        /// <summary>
+        /// Gets or sets the grid height in cells.
+        /// </summary>
+        public int ExtentsY { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cell spacing (model units).
+        /// </summary>
+        public int Size { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tileset modules available to the solver.
+        /// </summary>
+        public List<Module> Modules { get; set; }
+
+        /// <summary>
+        /// Gets the cell matrix in <c>[x][y]</c> layout.
+        /// </summary>
+        public List<List<Cell>> Matrix { get; private set; }
+
+        /// <summary>
+        /// Gets the output mesh geometry in <c>[x][y]</c> layout (only set after a successful solve).
+        /// </summary>
+        public List<List<Mesh>> Geometry { get; private set; }
+
+        /// <summary>
+        /// Gets the debug text in <c>[x][y]</c> layout (optional).
+        /// </summary>
+        public List<List<string>> Text { get; private set; }
+
+        /// <summary>
+        /// Gets the number of collapse steps performed during the last solve attempt.
+        /// </summary>
+        public int Steps { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the maximum number of collapse steps to attempt during a solve.
+        /// </summary>
+        public int MaxSteps { get; set; }
+
+        /// <summary>
+        /// Gets the number of cells that still have more than one possible module.
+        /// </summary>
+        public int Uncertain { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the solver encountered a contradiction.
+        /// </summary>
+        public bool Contradiction { get; private set; }
+
+        /// <summary>
+        /// Resets solver counters and flags (does not reinitialize the cell matrix).
         /// </summary>
         public void Reset()
         {
-            this.Steps = 0;
+            Steps = 0;
+            MaxSteps = 1000;
+            Uncertain = 0;
+            Contradiction = false;
         }
 
         /// <summary>
-        /// Default initialization of the grid.
+        /// (Re)initializes the cell matrix and resets output containers.
         /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown when <see cref="Modules"/> is null or empty.</exception>
         public void Initialize()
         {
-            List<List<Cell>> matrix = new List<List<Cell>>();
+            if (Modules == null || Modules.Count == 0)
+            {
+                throw new InvalidOperationException("Grid must have at least one module before initialization.");
+            }
 
-            // Set up the grid and uncertainty matrices.
-            for (int i = 0; i < this.ExtentsX; i++)
+            var matrix = new List<List<Cell>>();
+            for (var x = 0; x < ExtentsX; x++)
             {
                 matrix.Add(new List<Cell>());
-                for (int j = 0; j < this.ExtentsY; j++)
+                for (var y = 0; y < ExtentsY; y++)
                 {
-                    Cell cell = new Cell(this, i, j, this.Modules);
-                    matrix[i].Add(cell);
-                    Uncertain++;
+                    matrix[x].Add(new Cell(this, x, y, Modules));
                 }
             }
-            this.Contradiction = false;
-            this.Matrix = matrix;
+
+            Matrix = matrix;
+            Uncertain = ExtentsX * ExtentsY;
+            Contradiction = false;
+            Steps = 0;
+
+            Geometry = Create2DList<Mesh>(ExtentsX, ExtentsY);
+            Text = Create2DList<string>(ExtentsX, ExtentsY);
         }
 
         /// <summary>
-        /// Propogate the wave through the grid.
+        /// Attempts to solve the grid using Wave Function Collapse.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        public bool Propogate(int x, int y)
+        /// <param name="seed">The random seed to use.</param>
+        /// <param name="maxSteps">The maximum number of collapse steps to attempt.</param>
+        /// <param name="meshes">Output meshes for collapsed cells (flattened, in row-major order).</param>
+        /// <param name="log">Diagnostic log messages.</param>
+        /// <returns><see langword="true"/> when the grid was fully solved; otherwise <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxSteps"/> is not positive.</exception>
+        public bool TrySolve(int seed, int maxSteps, out List<Mesh> meshes, out List<string> log)
         {
-            Cell cell = this.Matrix[x][y];
-            List<double[]> nCoords = GetNeighbours(cell);
+            if (maxSteps <= 0) throw new ArgumentOutOfRangeException(nameof(maxSteps), maxSteps, "Max steps must be positive.");
 
-            for (int i = 0; i < nCoords.Count; i++)
+            MaxSteps = maxSteps;
+            Initialize();
+
+            log = new List<string>();
+            meshes = new List<Mesh>();
+
+            var random = new Random(seed);
+
+            while (Uncertain > 0 && Steps < MaxSteps)
             {
-                double[] nC = nCoords[i];
-
-                // Skip the neighbour if there is none.
-                if (double.IsNaN(nC[0]) && double.IsNaN(nC[1])) continue;
-                int nX = (int)nC[0];
-                int nY = (int)nC[1];    
-
-                Cell neighbour = this.Matrix[nX][nY];
-                List<Edge> nEdges = GetBorder((i + 2) % 4);
-                List<Edge> cEdges = GetBorder(i);
-
-                // First, update based on neighbours. Keep only cell edges that are in the neighbouring cells.
-                foreach (Edge e in cEdges)
+                var next = FindLowestEntropyCell(random);
+                if (next == null)
                 {
-                    Edge eOpp = new Edge(e.Name, (e.Type * 2) % 3);
-                    if (!nEdges.Contains(eOpp))
+                    break;
+                }
+
+                Steps++;
+                log.Add(string.Format("Step {0}: collapsing cell {1},{2} (entropy={3})", Steps, next.X, next.Y, next.Modules.Count));
+
+                Module chosen;
+                if (!next.TryCollapse(random, out chosen))
+                {
+                    Contradiction = true;
+                    log.Add(string.Format("Contradiction at cell {0},{1}: no modules remaining.", next.X, next.Y));
+                    break;
+                }
+
+                // Collapse reduces this cell to 1.
+                Uncertain--;
+
+                if (!Propagate(next.X, next.Y, log))
+                {
+                    Contradiction = true;
+                    log.Add(string.Format("Contradiction encountered during propagation from {0},{1}.", next.X, next.Y));
+                    break;
+                }
+            }
+
+            if (Uncertain == 0 && !Contradiction)
+            {
+                GetGeometry(out meshes);
+                log.Add("Solved.");
+                return true;
+            }
+
+            if (Steps >= MaxSteps)
+            {
+                log.Add(string.Format("Max steps ({0}) exceeded.", MaxSteps));
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Propagates constraints outward from a collapsed or updated cell.
+        /// </summary>
+        /// <param name="x">The cell X coordinate.</param>
+        /// <param name="y">The cell Y coordinate.</param>
+        /// <param name="log">Optional diagnostic log.</param>
+        /// <returns><see langword="true"/> when propagation completes without contradiction; otherwise <see langword="false"/>.</returns>
+        public bool Propagate(int x, int y, List<string> log = null)
+        {
+            var queue = new Queue<Cell>();
+            queue.Enqueue(Matrix[x][y]);
+
+            while (queue.Count > 0)
+            {
+                var cell = queue.Dequeue();
+
+                for (var dir = 0; dir < 4; dir++)
+                {
+                    var (dx, dy) = DirectionOffsets[dir];
+                    var nx = cell.X + dx;
+                    var ny = cell.Y + dy;
+                    if (nx < 0 || nx >= ExtentsX || ny < 0 || ny >= ExtentsY)
                     {
-                        // Remove the possibilities that rely on this.
-                        HashSet<Module> reliantSet = new HashSet<Module>();
-                        foreach (Module m in this.Matrix[x][y].Modules)
+                        continue;
+                    }
+
+                    var neighbor = Matrix[nx][ny];
+                    var beforeCount = neighbor.Modules.Count;
+
+                    var changed = ReduceNeighbourOptions(cell, neighbor, dir);
+                    if (changed == null)
+                    {
+                        return false;
+                    }
+
+                    if (changed.Value)
+                    {
+                        var afterCount = neighbor.Modules.Count;
+                        if (beforeCount > 1 && afterCount == 1)
                         {
-                            if (m.Edges[i] == e)
-                                reliantSet.Add(m);
+                            Uncertain--;
                         }
-                        this.Modules = reliantSet.ToList();
+
+                        if (log != null)
+                        {
+                            log.Add(string.Format("Reduced cell {0},{1} -> {2} possibilities.", neighbor.X, neighbor.Y, afterCount));
+                        }
+
+                        queue.Enqueue(neighbor);
                     }
                 }
-
-                /* CAUSES STACK OVERFLOW DUE TO NESTED LOOP
-                // Secondly, check if the neighbour needs to be propogated.
-                foreach (Edge e in nEdges)
-                {
-                    Edge eOpp = new Edge(e.Name, (e.Type * 2) % 3);
-                    if (!cEdges.Contains(eOpp))
-                    {
-                        Propogate(nX, nY); // Recursive?
-                    }
-                }
-                */
-            }
-
-            // If a cell only has one option left, mark it as certain.
-            if (this.Modules.Count == 0)
-            {
-                this.Contradiction = true;
-                throw new Exception("Unresolveable state reached.");
-            }
-            // Success
-            if (this.Modules.Count == 1)
-            {
-                this.Uncertain -= 1;
             }
 
             return true;
         }
 
         /// <summary>
-        /// Attempt to collapse each cell in the grid
-        /// and compute the final geometry.
+        /// Backwards-compatible misspelled alias for <see cref="Propagate(int,int,List{string})"/>.
         /// </summary>
-        public void GetGeometry()
+        /// <param name="x">The cell X coordinate.</param>
+        /// <param name="y">The cell Y coordinate.</param>
+        /// <returns><see langword="true"/> when propagation completes without contradiction; otherwise <see langword="false"/>.</returns>
+        [Obsolete("Use Propagate instead.")]
+        public bool Propogate(int x, int y)
         {
-            for (int i = 0; i < this.ExtentsX; i++)
+            return Propagate(x, y, null);
+        }
+
+        /// <summary>
+        /// Computes and caches output geometry for the current grid state.
+        /// </summary>
+        /// <param name="meshes">Flattened list of output meshes in row-major order.</param>
+        public void GetGeometry(out List<Mesh> meshes)
+        {
+            meshes = new List<Mesh>();
+
+            for (var x = 0; x < ExtentsX; x++)
             {
-                for (int j = 0; j < this.ExtentsY; j++)
+                for (var y = 0; y < ExtentsY; y++)
                 {
-                    Cell cell = this.Matrix[i][j];
-                    int possibilities = cell.Modules.Count;
-                    if (possibilities == 1)
+                    var cell = Matrix[x][y];
+                    if (!cell.IsCollapsed)
                     {
-                        if (cell.Collapse(out Mesh geo))
-                        {
-                            this.Geometry[i][j] = geo;
-                            this.Uncertain -= 1;
-                        }
+                        Text[x][y] = string.Format("X:{0}, Y:{1}, P:{2}", x * Size, y * Size, cell.Modules.Count);
+                        continue;
                     }
-                    else
-                    {
-                        // TODO: Implement Z as third position.
-                        this.Text[i][j] = String.Format("X:{0}, Y:{1}, P:{2}",
-                            (i * this.Size).ToString(),
-                            (j * this.Size).ToString(),
-                            possibilities.ToString());
-                    }
+
+                    var module = cell.Modules[0];
+                    var geo = module.Geometry.DuplicateMesh();
+                    var pt = new Point3d(x * Size, y * Size, 0);
+                    var vec = new Vector3d(pt - module.Origin);
+                    var xform = Transform.Translation(vec);
+                    geo.Transform(xform);
+
+                    Geometry[x][y] = geo;
+                    meshes.Add(geo);
                 }
             }
         }
 
-        /// <summary>
-        /// Return an unsorted set of edges
-        /// representing the border.
-        /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        public List<Edge> GetBorder(int index)
+        private Cell FindLowestEntropyCell(Random random)
         {
-            HashSet<Edge> edges = new HashSet<Edge>();
+            Cell best = null;
+            var bestEntropy = int.MaxValue;
 
-            foreach (Module m in this.Modules)
+            for (var x = 0; x < ExtentsX; x++)
             {
-                edges.Add(m.Edges[index]);
+                for (var y = 0; y < ExtentsY; y++)
+                {
+                    var cell = Matrix[x][y];
+                    var entropy = cell.Modules.Count;
+                    if (entropy <= 1) continue;
+
+                    if (entropy < bestEntropy)
+                    {
+                        best = cell;
+                        bestEntropy = entropy;
+                        continue;
+                    }
+
+                    if (entropy == bestEntropy && best != null && random.Next(0, 2) == 0)
+                    {
+                        best = cell;
+                    }
+                }
             }
-            return edges.ToList();
+
+            return best;
         }
 
-        /// <summary>
-        /// Return the neighbouring coordinates
-        /// of the cell.
-        /// </summary>
-        /// <returns></returns>
-        public List<double[]> GetNeighbours(Cell cell)
+        private bool? ReduceNeighbourOptions(Cell cell, Cell neighbor, int directionToNeighbor)
         {
-            int x = cell.X;
-            int y = cell.Y;
-
-            List<double> nX = new List<double>();
-            List<double> nY = new List<double>();
-
-            if (y < cell.GridInstance.ExtentsY - 1)
+            if (cell.Modules.Count == 0 || neighbor.Modules.Count == 0)
             {
-                nX.Add(x); nY.Add(y + 1);
-            }
-            else
-            {
-                nX.Add(double.NaN); nY.Add(double.NaN);
-            }
-            if (x < cell.GridInstance.ExtentsX - 1)
-            {
-                nX.Add(x + 1); nY.Add(y);
-            }
-            else
-            {
-                nX.Add(double.NaN); nY.Add(double.NaN);
-            }
-            if (y > 0)
-            {
-                nX.Add(x); nY.Add(y - 1);
-            }
-            else
-            {
-                nX.Add(double.NaN); nY.Add(double.NaN);
-            }
-            if (x > 0)
-            {
-                nX.Add(x - 1); nY.Add(y);
-            }
-            else
-            {
-                nX.Add(double.NaN); nY.Add(double.NaN);
+                return null;
             }
 
-            List<double[]> coords = new List<double[]>();
-            for (int i = 0; i < nX.Count; i++)
+            var oppositeDirection = (directionToNeighbor + 2) % 4;
+
+            var remove = new List<Module>();
+            for (var n = 0; n < neighbor.Modules.Count; n++)
             {
-                double[] c = { nX[i], nY[i] };
-                coords.Add(c);
+                var neighborModule = neighbor.Modules[n];
+
+                var compatible = false;
+                for (var c = 0; c < cell.Modules.Count; c++)
+                {
+                    var cellModule = cell.Modules[c];
+                    var a = cellModule.Edges[directionToNeighbor];
+                    var b = neighborModule.Edges[oppositeDirection];
+                    if (a.Matches(b))
+                    {
+                        compatible = true;
+                        break;
+                    }
+                }
+
+                if (!compatible)
+                {
+                    remove.Add(neighborModule);
+                }
             }
 
-            return coords;
+            if (remove.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < remove.Count; i++)
+            {
+                neighbor.Modules.Remove(remove[i]);
+            }
+
+            if (neighbor.Modules.Count == 0)
+            {
+                return null;
+            }
+
+            return true;
+        }
+
+        private static List<List<T>> Create2DList<T>(int xCount, int yCount)
+        {
+            var list = new List<List<T>>();
+            for (var x = 0; x < xCount; x++)
+            {
+                list.Add(new List<T>());
+                for (var y = 0; y < yCount; y++)
+                {
+                    list[x].Add(default(T));
+                }
+            }
+            return list;
         }
     }
 
     /// <summary>
-    /// General cell class.
+    /// Represents a single cell in the WFC grid and its remaining module possibilities.
     /// </summary>
     public class Cell
     {
-        public Grid GridInstance { get; set; }
-        public int X { get; set; }
-        public int Y { get; set; }
-        public List<double[]> Neighbours { get; set; }
-        public List<Module> Modules { get; set; }
-        public bool Certain { get; set; }
-
         /// <summary>
-        /// Default (empty) constructor class.
+        /// Initializes a new instance of the <see cref="Cell"/> class.
         /// </summary>
-        /// <param name="grid"></param>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="modules"></param>
+        /// <param name="grid">The owning grid.</param>
+        /// <param name="x">The X coordinate.</param>
+        /// <param name="y">The Y coordinate.</param>
+        /// <param name="modules">The initial module possibilities.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="grid"/> or <paramref name="modules"/> is null.</exception>
         public Cell(Grid grid, int x, int y, List<Module> modules)
         {
-            this.GridInstance = grid;
-            this.X = x;
-            this.Y = y;
-            this.Modules = modules;
+            if (grid == null) throw new ArgumentNullException(nameof(grid));
+            if (modules == null) throw new ArgumentNullException(nameof(modules));
+
+            GridInstance = grid;
+            X = x;
+            Y = y;
+            Modules = new List<Module>(modules);
         }
 
         /// <summary>
-        /// Attempt to collapse the cell.
+        /// Gets the owning grid.
         /// </summary>
-        /// <returns></returns>
-        public bool Collapse(out Mesh meshOut)
+        public Grid GridInstance { get; private set; }
+
+        /// <summary>
+        /// Gets the X coordinate.
+        /// </summary>
+        public int X { get; private set; }
+
+        /// <summary>
+        /// Gets the Y coordinate.
+        /// </summary>
+        public int Y { get; private set; }
+
+        /// <summary>
+        /// Gets the remaining possible modules for this cell.
+        /// </summary>
+        public List<Module> Modules { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the cell has been collapsed to a single module.
+        /// </summary>
+        public bool IsCollapsed
         {
-            try
+            get { return Modules != null && Modules.Count == 1; }
+        }
+
+        /// <summary>
+        /// Collapses the cell to a single randomly selected module.
+        /// </summary>
+        /// <param name="random">The random instance to use.</param>
+        /// <param name="chosen">The chosen module.</param>
+        /// <returns><see langword="true"/> when a module could be chosen; otherwise <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="random"/> is null.</exception>
+        public bool TryCollapse(Random random, out Module chosen)
+        {
+            if (random == null) throw new ArgumentNullException(nameof(random));
+
+            chosen = null;
+
+            if (Modules == null || Modules.Count == 0)
             {
-                var rand = new Random();
-                // Choose a random module from the remaining modules.
-                Module mod = this.Modules[(int)Util.Remap(rand.NextDouble(), 0, 1, 0, this.Modules.Count - 1)];
+                return false;
+            }
 
-                Mesh geo = mod.Geometry.DuplicateMesh();
-
-                // TODO: Implement 3D positioning.
-                Point3d pt = new Point3d(this.X * this.GridInstance.Size, this.Y * this.GridInstance.Size, 0);
-
-                Vector3d vec = new Vector3d(pt - mod.Origin);
-                Transform xForm = Transform.Translation(vec);
-                geo.Transform(xForm);
-
-                meshOut = geo;
+            if (Modules.Count == 1)
+            {
+                chosen = Modules[0];
                 return true;
             }
-            catch { meshOut = null; return false; }
+
+            var idx = random.Next(0, Modules.Count);
+            chosen = Modules[idx];
+
+            Modules.Clear();
+            Modules.Add(chosen);
+            return true;
         }
     }
 }
+
